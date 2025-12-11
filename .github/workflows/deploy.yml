@@ -1,0 +1,29 @@
+name: CI / Build Docker Image
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+      - name: Build Docker image
+        run: docker build -t ${{ github.repository }}:latest .
+      # Optionally login & push to Docker Hub (requires secrets)
+      - name: Docker login
+        if: secrets.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push image
+        if: secrets.DOCKERHUB_USERNAME != ''
+        run: |
+          docker tag ${{ github.repository }}:latest ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:latest
